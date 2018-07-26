@@ -18,39 +18,46 @@ import urllib2
 import subprocess
 STOCK_SYMBOLS = (
 	"MBB",
-	"E1VFVN30",
 	"PNJ",
-	"VNM",
-	"SSI",
-	"FPT",
-	"HAG",
 	"VCI",
-	"VPB",
-	"CTG",
-	"VHM",
-	"NLG",
-	"VRE",
-	"ACB",
-	"YEG",
-	"DXG",
-	"BID",
-	"GAS",
-	"VGC",
-	"HSG",
-	"HCM",
-	"VIC",
-	"VCB",
+	"E1VFVN30",
+	# "VNM",
+	# "SSI",
+	# "FPT",
+	# "HAG",
+	# "VPB",
+	# "CTG",
+	# "VHM",
+	# "NLG",
+	# "VRE",
+	# "ACB",
+	# "YEG",
+	# "DXG",
+	# "BID",
+	# "GAS",
+	# "VGC",
+	# "HSG",
+	# "HCM",
+	# "VIC",
+	# "VCB",
 )
 NO_CHART = 0
 CHART_IN_MAINMENU = 1
 CHART_IN_SUBMENU = 2
+USE_COLOR_IN_MAIN_TITLE = False
 
 ENABLE_CHART_STOCKS = {
 	"MBB": {
 		"type": CHART_IN_MAINMENU
 	},
-	"E1VFVN30": {
-		"type": NO_CHART
+	"PNJ": {
+		"type": CHART_IN_MAINMENU
+	},
+	"VCI": {
+		"type": CHART_IN_MAINMENU
+	},
+	"VNM": {
+		"type": CHART_IN_SUBMENU
 	}
 }
 
@@ -111,6 +118,9 @@ if "Symbols" in value:
 
 		# Use HSX Index for main title
 		if sym["Symbol"] == "HSX":
+			if not USE_COLOR_IN_MAIN_TITLE:
+				color = 'black'
+				
 			main_title =  "{: <5} {: <5} {: <5}| color={} trim=false".format(sym["Symbol"], sym["Datas"][0], changed, color)
 			continue
 		
@@ -139,6 +149,7 @@ lines.insert(0, main_title)
 for line in lines:
 	print line
 
+# [WIP] need to define some conditions for notifications
 if ENABLE_NOTIFICATION:
 	command = u'osascript -e \'display notification \"Tăng/Giảm nhiều quá\" with title \"Cảnh báo\"\''
 	curenv = os.environ
