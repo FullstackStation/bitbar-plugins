@@ -17,15 +17,15 @@ import base64
 import urllib2
 import subprocess
 STOCK_SYMBOLS = (
-    "YEG",
-    "MBB",
-    "VCI",
+    # "YEG",
+    # "MBB",
+    # "VCI",
     # "VJC",
     # "SCR",
     # "CTD",
     # "PNJ",
     # "E1VFVN30",
-    "VNM",
+    # "VNM",
     # "SSI",
     # "FPT",
     # "HAG",
@@ -164,6 +164,7 @@ lines.insert(0, main_title)
 for line in lines:
     print line
 
+# [WIP] need to define some conditions for notifications
 if ENABLE_NOTIFICATION:
     command = u'osascript -e \'display notification \"Tăng/Giảm nhiều quá\" with title \"Cảnh báo\"\''
     curenv = os.environ
