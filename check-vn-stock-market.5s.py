@@ -17,48 +17,63 @@ import base64
 import urllib2
 import subprocess
 STOCK_SYMBOLS = (
-	"MBB",
-	"E1VFVN30",
-	"PNJ",
-	"VNM",
-	"SSI",
-	"FPT",
-	"HAG",
-	"VCI",
-	"VPB",
-	"CTG",
-	"VHM",
-	"NLG",
-	"VRE",
-	"ACB",
-	"YEG",
-	"DXG",
-	"BID",
-	"GAS",
-	"VGC",
-	"HSG",
-	"HCM",
-	"VIC",
-	"VCB",
+    "YEG",
+    "MBB",
+    "VCI",
+    # "VJC",
+    # "SCR",
+    # "CTD",
+    # "PNJ",
+    # "E1VFVN30",
+    "VNM",
+    # "SSI",
+    # "FPT",
+    # "HAG",
+    # "VPB",
+    # "CTG",
+    # "VHM",
+    # "NLG",
+    # "VRE",
+    # "ACB",
+    # "YEG",
+    # "DXG",
+    # "BID",
+    # "GAS",
+    # "VGC",
+    # "HSG",
+    # "HCM",
+    # "VIC",
+    # "VCB",
 )
 NO_CHART = 0
 CHART_IN_MAINMENU = 1
 CHART_IN_SUBMENU = 2
+USE_COLOR_IN_MAIN_TITLE = False
 
 ENABLE_CHART_STOCKS = {
-	"MBB": {
-		"type": CHART_IN_MAINMENU
-	},
-	"E1VFVN30": {
-		"type": NO_CHART
-	}
+    # "YEG": {
+    #     "type": CHART_IN_MAINMENU
+    # },
+    # "MBB": {
+    #     "type": CHART_IN_MAINMENU
+    # },
+    # "PNJ": {
+    #     "type": CHART_IN_MAINMENU
+    # },
+    # "VCI": {
+    #     "type": CHART_IN_MAINMENU
+    # },
+    # "VNM": {
+    #     "type": CHART_IN_SUBMENU
+    # }
 }
 
 """ If True, the script will notify an alert if it meet the conditions """
 ENABLE_NOTIFICATION = False
 
 
-DATA_API_ENDPOINT = "http://solieu3.vcmedia.vn/ProxyHandler.ashx?RequestName=StockSymbolSlide&RequestType=json&sym={}".format(";".join(STOCK_SYMBOLS))
+DATA_API_ENDPOINT = "http://solieu3.vcmedia.vn/ProxyHandler.ashx?RequestName=StockSymbolSlide&RequestType=json&sym={}".format(
+    ";".join(STOCK_SYMBOLS))
 IMAGE_API_ENDPOINT_FORMAT = "http://s.cafef.vn/chartindex/pricechart.ashx?type=price&width=260&height=160&symbol={}"
 
 r = urllib2.urlopen(DATA_API_ENDPOINT)
@@ -80,69 +95,79 @@ value = json.loads(jsonValue)
 
 ENABLE_CHART = True
 
+COLORFUL = False
+
 lines = []
 if "Symbols" in value:
-	for sym in value["Symbols"]:
-		color = "black"
-		if sym["Datas"][0] == sym["Datas"][3]:
-			color = "magenta"
-		elif sym["Datas"][0] == sym["Datas"][4]:
-			color = "cyan"
-		elif float(sym["Datas"][1]) < 0:
-			color = "red"
-		elif float(sym["Datas"][1]) > 0:
-			color = "green"
-		else:
-			pass
-		
-		# Process for +/- sign
-		changed = sym["Datas"][1] or ""
-		if changed:
-			if float(changed) > 0:
-				changed = str(changed)
-				if changed[0] != "+":
-					changed = "+" + changed
-			else:
-				changed = str(changed)
-		
-		# Don't want to display HNX Index
-		if sym["Symbol"] == "HNX":
-			continue
+    for sym in value["Symbols"]:
+        color = "black"
+        if COLORFUL:
+            if sym["Datas"][0] == sym["Datas"][3]:
+                color = "magenta"
+            elif sym["Datas"][0] == sym["Datas"][4]:
+                color = "cyan"
+            elif float(sym["Datas"][1]) < 0:
+                color = "red"
+            elif float(sym["Datas"][1]) > 0:
+                color = "green"
+            else:
+                pass
 
-		# Use HSX Index for main title
-		if sym["Symbol"] == "HSX":
-			main_title =  "{: <5} {: <5} {: <5}| color={} trim=false".format(sym["Symbol"], sym["Datas"][0], changed, color)
-			continue
-		
-		# Append the current symbol
-		lines.append( "{: <10} {: <10} {}| color={} trim=false font=Monaco".format(sym["Symbol"], sym["Datas"][0], changed, color))
-		
-		# Process to add image
-		if ENABLE_CHART and sym["Symbol"] in ENABLE_CHART_STOCKS.keys() and ENABLE_CHART_STOCKS[sym["Symbol"]]["type"] != NO_CHART:
+        # Process for +/- sign
+        changed = sym["Datas"][1] or ""
+        if changed:
+            if float(changed) > 0:
+                changed = str(changed)
+                if changed[0] != "+":
+                    changed = "+" + changed
+            else:
+                changed = str(changed)
 
-			image_response = urllib2.urlopen(IMAGE_API_ENDPOINT_FORMAT.format(sym["Symbol"]))
-			# print image_response.content
-			base64_image = str(base64.b64encode(image_response.read()))
-			if ENABLE_CHART_STOCKS[sym["Symbol"]]["type"] == CHART_IN_SUBMENU:
-				lines.append("-- | image={} refresh=true".format(base64_image))
-			else:
-				lines.append("| image={} refresh=true".format(base64_image))
+        # Don't want to display HNX Index
+        if sym["Symbol"] == "HNX":
+            continue
+
+        # Use HSX Index for main title
+        if sym["Symbol"] == "HSX":
+            if not USE_COLOR_IN_MAIN_TITLE:
+                color = 'black'
+
+            main_title = "{: <5} {: <5} {: <5}| color={} trim=false".format(
+                sym["Symbol"], sym["Datas"][0], changed, color)
+            continue
+
+        # Append the current symbol
+        lines.append("{: <10} {: <10} {}| color={} trim=false font=Monaco".format(
+            sym["Symbol"], sym["Datas"][0], changed, color))
+
+        # Process to add image
+        if ENABLE_CHART and sym["Symbol"] in ENABLE_CHART_STOCKS.keys() and ENABLE_CHART_STOCKS[sym["Symbol"]]["type"] != NO_CHART:
+
+            image_response = urllib2.urlopen(
+                IMAGE_API_ENDPOINT_FORMAT.format(sym["Symbol"]))
+            # print image_response.content
+            base64_image = str(base64.b64encode(image_response.read()))
+            if ENABLE_CHART_STOCKS[sym["Symbol"]]["type"] == CHART_IN_SUBMENU:
+                lines.append("-- | image={} refresh=true".format(base64_image))
+            else:
+                lines.append("| image={} refresh=true".format(base64_image))
 
 # Get index's image
-image_response = urllib2.urlopen("http://s.cafef.vn/chartindex/chartheader.ashx")
+image_response = urllib2.urlopen(
+    "http://s.cafef.vn/chartindex/chartheader.ashx")
 vnindex_image = str(base64.b64encode(image_response.read()))
 lines.insert(0, "---")
-lines.insert(0, "| image={}".format(vnindex_image))			
+lines.insert(0, "| image={}".format(vnindex_image))
 lines.insert(0, "---")
 lines.insert(0, main_title)
 
 for line in lines:
-	print line
+    print line
 
 if ENABLE_NOTIFICATION:
-	command = u'osascript -e \'display notification \"Tăng/Giảm nhiều quá\" with title \"Cảnh báo\"\''
-	curenv = os.environ
-	curenv['LC_ALL']="en_US.UTF-8"
+    command = u'osascript -e \'display notification \"Tăng/Giảm nhiều quá\" with title \"Cảnh báo\"\''
+    curenv = os.environ
+    curenv['LC_ALL'] = "en_US.UTF-8"
 
-	p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,env=curenv)
-                
+    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT, env=curenv)
