@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env /usr/local/bin/python
 # coding=utf-8
 #
 # <bitbar.title>Vietnam's stock market information</bitbar.title>
-# <bitbar.version>v1.0</bitbar.version>
+# <bitbar.version>v2</bitbar.version>
 # <bitbar.author>Nhan Nguyen</bitbar.author>
 # <bitbar.author.github>virusvn</bitbar.author.github>
 # <bitbar.desc>Displays Vietnam's stock market information</bitbar.desc>
@@ -14,11 +14,12 @@
 import os
 import json
 import base64
-import urllib2
+from urllib.request import urlopen
 import subprocess
+
 STOCK_SYMBOLS = (
     # "YEG",
-    # "MBB",
+    #  "MBB",
     # "VCI",
     # "VJC",
     # "SCR",
@@ -28,7 +29,9 @@ STOCK_SYMBOLS = (
     # "VNM",
     # "SSI",
     # "FPT",
-    # "HAG",
+    "HAG",
+    "HNG",
+    "DBC",
     # "VPB",
     # "CTG",
     # "VHM",
@@ -44,6 +47,9 @@ STOCK_SYMBOLS = (
     # "HCM",
     # "VIC",
     # "VCB",
+    "VNM",
+    "GEX",
+    "STB",
 )
 NO_CHART = 0
 CHART_IN_MAINMENU = 1
@@ -73,10 +79,11 @@ ENABLE_NOTIFICATION = False
 
 
 DATA_API_ENDPOINT = "http://solieu3.vcmedia.vn/ProxyHandler.ashx?RequestName=StockSymbolSlide&RequestType=json&sym={}".format(
-    ";".join(STOCK_SYMBOLS))
+    ";".join(STOCK_SYMBOLS)
+)
 IMAGE_API_ENDPOINT_FORMAT = "http://s.cafef.vn/chartindex/pricechart.ashx?type=price&width=260&height=160&symbol={}"
 
-r = urllib2.urlopen(DATA_API_ENDPOINT)
+r = urlopen(DATA_API_ENDPOINT)
 """The data will be received:
 var StockSymbolSlide = ({
 	"Symbols":[
@@ -90,7 +97,7 @@ var StockSymbolSlide = ({
 	"HeaderBox":""
 });
 """
-jsonValue = '{%s}' % (r.read().split('{', 1)[1].rsplit('}', 1)[0],)
+jsonValue = "{%s}" % (r.read().decode("utf-8").split("{", 1)[1].rsplit("}", 1)[0],)
 value = json.loads(jsonValue)
 
 ENABLE_CHART = True
@@ -116,12 +123,9 @@ if "Symbols" in value:
         # Process for +/- sign
         changed = sym["Datas"][1] or ""
         if changed:
-            if float(changed) > 0:
-                changed = str(changed)
-                if changed[0] != "+":
-                    changed = "+" + changed
-            else:
-                changed = str(changed)
+            changed = round(float(changed), 2)
+            if changed > 0:
+                changed = "+" + str(changed)
 
         # Don't want to display HNX Index
         if sym["Symbol"] == "HNX":
@@ -130,21 +134,28 @@ if "Symbols" in value:
         # Use HSX Index for main title
         if sym["Symbol"] == "HSX":
             if not USE_COLOR_IN_MAIN_TITLE:
-                color = 'black'
+                color = "black"
 
             main_title = "{: <5} {: <5} {: <5}| color={} trim=false".format(
-                sym["Symbol"], sym["Datas"][0], changed, color)
+                sym["Symbol"], sym["Datas"][0], changed, color
+            )
             continue
 
         # Append the current symbol
-        lines.append("{: <10} {: <10} {}| color={} trim=false font=Monaco".format(
-            sym["Symbol"], sym["Datas"][0], changed, color))
+        lines.append(
+            "{: <10} {: <10} {}| color={} trim=false font=Monaco".format(
+                sym["Symbol"], sym["Datas"][0], changed, color
+            )
+        )
 
         # Process to add image
-        if ENABLE_CHART and sym["Symbol"] in ENABLE_CHART_STOCKS.keys() and ENABLE_CHART_STOCKS[sym["Symbol"]]["type"] != NO_CHART:
+        if (
+            ENABLE_CHART
+            and sym["Symbol"] in ENABLE_CHART_STOCKS.keys()
+            and ENABLE_CHART_STOCKS[sym["Symbol"]]["type"] != NO_CHART
+        ):
 
-            image_response = urllib2.urlopen(
-                IMAGE_API_ENDPOINT_FORMAT.format(sym["Symbol"]))
+            image_response = urlopen(IMAGE_API_ENDPOINT_FORMAT.format(sym["Symbol"]))
             # print image_response.content
             base64_image = str(base64.b64encode(image_response.read()))
             if ENABLE_CHART_STOCKS[sym["Symbol"]]["type"] == CHART_IN_SUBMENU:
@@ -153,8 +164,7 @@ if "Symbols" in value:
                 lines.append("| image={} refresh=true".format(base64_image))
 
 # Get index's image
-image_response = urllib2.urlopen(
-    "http://s.cafef.vn/chartindex/chartheader.ashx")
+image_response = urlopen("http://s.cafef.vn/chartindex/chartheader.ashx")
 vnindex_image = str(base64.b64encode(image_response.read()))
 lines.insert(0, "---")
 lines.insert(0, "| image={}".format(vnindex_image))
@@ -162,13 +172,18 @@ lines.insert(0, "---")
 lines.insert(0, main_title)
 
 for line in lines:
-    print line
+    print(line)
 
 # [WIP] need to define some conditions for notifications
 if ENABLE_NOTIFICATION:
-    command = u'osascript -e \'display notification \"Tăng/Giảm nhiều quá\" with title \"Cảnh báo\"\''
+    command = 'osascript -e \'display notification "Tăng/Giảm nhiều quá" with title "Cảnh báo"\''
     curenv = os.environ
-    curenv['LC_ALL'] = "en_US.UTF-8"
+    curenv["LC_ALL"] = "en_US.UTF-8"
 
-    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
-                         stderr=subprocess.STDOUT, env=curenv)
+    p = subprocess.Popen(
+        command,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env=curenv,
+    )
